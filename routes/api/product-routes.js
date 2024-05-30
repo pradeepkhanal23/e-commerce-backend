@@ -4,15 +4,32 @@ const { Product, Category, Tag, ProductTag } = require("../../models");
 // The `/api/products` endpoint
 
 // get all products
-router.get("/", (req, res) => {
-  // find all products
-  // be sure to include its associated Category and Tag data
+router.get("/", async (req, res) => {
+  // finding all products
+  try {
+    const products = await Product.findAll({
+      //including its associated Category and Tag data
+      include: [{ model: Category }, { model: Tag }],
+    });
+
+    res.status(200).send(products);
+  } catch (error) {
+    res.status(500).json(error);
+  }
 });
 
 // get one product
-router.get("/:id", (req, res) => {
-  // find a single product by its `id`
-  // be sure to include its associated Category and Tag data
+router.get("/:id", async (req, res) => {
+  // finding a single product by its `id`
+  try {
+    const product = await Product.findByPk(req.params.id, {
+      //including its associated Category and Tag data
+      include: [{ model: Category }, { model: Tag }],
+    });
+    res.status(200).json(product);
+  } catch (error) {
+    res.status(404).send(`No products under ID:${req.params.id} is found!`);
+  }
 });
 
 // create new product
@@ -91,8 +108,30 @@ router.put("/:id", (req, res) => {
     });
 });
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", async (req, res) => {
   // delete one product by its `id` value
+  try {
+    const isDeleted = await Product.destroy({
+      where: {
+        id: req.params.id,
+      },
+    });
+
+    if (isDeleted) {
+      res.status(200).json({
+        message: "Product successfully deleted",
+      });
+    } else {
+      res.status(404).json({
+        message: "Product not found",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+      details: error.message,
+    });
+  }
 });
 
 module.exports = router;
